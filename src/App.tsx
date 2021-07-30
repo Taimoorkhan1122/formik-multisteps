@@ -5,6 +5,8 @@ import FormContainer from './Components/FormContainer';
 function App() {
   return (
     <div className="App">
+      <h1>Formik Multistep form</h1>
+      <h2>Register</h2>
       <FormContainer />
     </div>
   );

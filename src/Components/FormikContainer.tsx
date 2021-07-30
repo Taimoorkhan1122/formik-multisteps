@@ -4,14 +4,22 @@ import Stepper from "@material-ui/core/Stepper";
 import Step from "@material-ui/core/Step";
 import StepButton from "@material-ui/core/StepButton";
 import Button from "@material-ui/core/Button";
-import { Formik,Form, FormikConfig, FormikValues } from "formik";
+import { Formik,Form, FormikConfig, FormikValues, FormikTouched } from "formik";
+import { CircularProgress } from "@material-ui/core";
 
 const useStyles = makeStyles((theme) => ({
   root: {
     width: "100%",
+    '& .MuiTextField-root': {
+      marginBottom: theme.spacing(2)
+    },
+    '& .MuiStepper-root': {
+      padding: '10px'
+    }
   },
   button: {
     marginRight: theme.spacing(1),
+    marginTop: theme.spacing(5)
   },
   completed: {
     display: "inline-block",
@@ -42,10 +50,11 @@ export default function FormikContainer({
 }: FormikConfig<FormikValues>) {
   const classes = useStyles();
   const [activeStep, setActiveStep] = useState(0);
-  const [completed, setCompleted] = useState(false);
   const childrenArray = React.Children.toArray(children) as React.ReactElement<FormikStepProps>[];
   const currentChild = childrenArray[activeStep]
-
+  const [completed, setCompleted] = useState(false);
+  
+  
   const steps = getSteps();
 
   const totalSteps = () => {
@@ -55,7 +64,14 @@ export default function FormikContainer({
   const isLastStep = () => {
     return activeStep === totalSteps() - 1;
   };
+interface setTouchedFunc {
+  (setTouched: FormikTouched<FormikValues>, shouldValidate?: boolean | undefined) : void
+}
 
+  const handleNext = (setTouched: setTouchedFunc) => {
+    setActiveStep((prevActiveStep) => prevActiveStep + 1);    
+    setTouched({});
+  };
   const handleBack = () => {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
@@ -69,29 +85,29 @@ export default function FormikContainer({
       <Formik
         {...props}
         onSubmit={async (values, helpers) => {
+          console.log("submitting");
+
           if (isLastStep()) {
             await props.onSubmit(values, helpers);
             setCompleted(true);
-          } else {
-            setActiveStep((s) => s + 1);
-            helpers.setTouched({});
           }
         }}>
-        {({ isSubmitting }) => (
+        {({ isSubmitting, setTouched, validateForm }) => (
           <Form>
-            <Stepper nonLinear activeStep={activeStep}>
+            <Stepper alternativeLabel activeStep={activeStep}>
               {steps.map((label, index) => (
                 <Step key={label} completed={completed}>
                   <StepButton
                     onClick={handleStep(index)}
-                    // completed={completed[index]}
-                  >
+                    completed={activeStep > index || completed}>
                     {label}
                   </StepButton>
                 </Step>
               ))}
             </Stepper>
+
             {currentChild}
+
             {activeStep > 0 && (
               <Button
                 onClick={handleBack}
@@ -102,7 +118,13 @@ export default function FormikContainer({
               </Button>
             )}
             <Button
-              type="submit"
+              startIcon={
+                isSubmitting ? (
+                  <CircularProgress size="1rem" color="secondary" />
+                ) : null
+              }
+              type={isLastStep() ? "submit" : "button"}
+              onClick={!isLastStep() ? () => handleNext(setTouched) : undefined}
               variant="contained"
               color="primary"
               className={classes.button}
