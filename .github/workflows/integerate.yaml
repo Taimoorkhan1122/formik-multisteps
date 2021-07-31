@@ -23,4 +23,4 @@ jobs:
       - name: Install surge
         run: npm install -g surge
       - name: Run Surge
-        run: surge ./formik-mui-multistep.surge.sh --token ${{secrets.MY_SECRET}}
+        run: surge ./build formik-mui-multistep.surge.sh --token ${{secrets.MY_SECRET}}
